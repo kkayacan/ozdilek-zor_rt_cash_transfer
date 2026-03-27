@@ -1,0 +1,8 @@
+000	& & & &
+001	Dosya seçin.
+002	&1 nolu malzeme &2 nolu mağaza için blokelidir.
+003	&1 nolu malzeme satışa blokelidir.
+004	& nolu işlem için EXPORT_LOG güncellemesinde hata
+005	Silinmek istenen kuyruk verisi bulunamadı
+006	SQL hatası & (&)
+007	Dahili hata (&)

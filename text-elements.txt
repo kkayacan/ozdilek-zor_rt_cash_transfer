@@ -1,0 +1,4 @@
+T01	Tam olarak aktarılmadığı için aşağıdaki kuyruk kayıtları silindi.
+T02	Sonraki çalıştırmada tekrar denenecek.
+T03	RETAILSTOREID
+T04	BUSINESSDAYDATE
