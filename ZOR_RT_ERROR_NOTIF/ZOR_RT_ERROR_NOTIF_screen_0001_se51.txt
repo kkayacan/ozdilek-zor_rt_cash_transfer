@@ -1,0 +1,20 @@
+*--------------------------------------------------------------------*
+* SE51: Dynpro 0001 — Program ZOR_RT_ERROR_NOTIF
+* (alv-sample.abap ile aynı: tam ekran ALV — cl_gui_custom_container=>screen0)
+*--------------------------------------------------------------------*
+* Screen type: Normal
+* Next screen: 0001
+* Tam ekran ALV için layout alanı gerekmez (Custom Control yok).
+*
+* Flow logic:
+*   PROCESS BEFORE OUTPUT.
+*     MODULE pbo.
+*   PROCESS AFTER INPUT.
+*     MODULE pai.
+*
+*--------------------------------------------------------------------*
+* SE41: GUI status 0100 — Program ZOR_RT_ERROR_NOTIF
+*   BACK  -> FCOD BACK (veya RW)
+*   EXIT  -> FCOD EXIT
+*   CANC  -> FCOD CANC
+*--------------------------------------------------------------------*

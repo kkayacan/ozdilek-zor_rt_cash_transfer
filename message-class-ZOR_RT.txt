@@ -6,3 +6,5 @@
 005	Silinmek istenen kuyruk verisi bulunamadı
 006	SQL hatası & (&)
 007	Dahili hata (&)
+008	Başlangıç tarihi bitiş tarihinden büyük olamaz.
+035	E-posta gönderilemedi: &1

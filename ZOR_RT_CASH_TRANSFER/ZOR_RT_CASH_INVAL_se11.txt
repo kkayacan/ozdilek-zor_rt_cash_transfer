@@ -1,0 +1,22 @@
+*--------------------------------------------------------------------*
+* SE11: Transparent table ZOR_RT_CASH_INVAL
+* Delivery class: Z
+*--------------------------------------------------------------------*
+* Primary key (öneri):
+*   MANDT         CLNT
+*   GO_TRANS_ID   CHAR 40
+*   ERDAT         DATS
+*   ERZET         UZEIT   (veya TIMS — sürüme göre)
+*
+* Alanlar:
+*   ERNAM             UNAME (12)
+*   RECEIPT_BARCODE   CHAR 40
+*   FK_STORE          CHAR 20
+*   FK_POS            CHAR 20
+*   BUSINESSDAYDATE   DATS
+*   RETAILSTOREID     /POSDW/RETAILSTOREID
+*   REASON            CHAR 30
+*   ZBAT              CHAR 1
+*--------------------------------------------------------------------*
+* Not: ABAP kaynaklarında alan adı ZBAT kullanılır (ls_inval-zbat).
+*--------------------------------------------------------------------*

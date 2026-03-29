@@ -1,0 +1,41 @@
+* SE38 / Rapor metin öğeleri — ZOR_RT_ERROR_NOTIF
+*
+* Seçim ekranı
+* T01  Perakende hata bildirimi
+* S01  Başlangıç
+* S02  Bitiş
+*
+* Dynpro başlığı (SE41 Title T01)
+* (T01 ile aynı metin kullanılabilir veya ayrı tutulabilir)
+*
+* E-posta gövdesi / konu
+* M00  ZOR_RT_ERROR_NOTIF
+* M01  POS / Genius kontrol özeti —
+* M02  Hatalı işlemler (eksik tablo)
+* M03  Kayıt yok
+* M04  Hatalı kasalar (BW - SAP)
+*
+* Tablo kolon başlıkları (hatalı işlem listesi)
+* F01  ERDAT
+* F02  ERZET
+* F03  GO_TRANS_ID
+* F04  Barkod
+* F05  Mağaza
+* F06  POS
+* F07  İş günü
+* F08  RETAILSTOREID
+* F09  Sebep
+*
+* Tablo kolon başlıkları (kasa fark listesi)
+* F10  Mağaza adı
+* F11  Üretim yeri
+* F12  FK_POS
+* F13  Kasa
+* F14  IP
+* F15  Tarih
+* F16  Satış BW
+* F17  Satış SAP
+* F18  Fark satış
+* F19  İade BW
+* F20  İade SAP
+* F21  Fark iade
