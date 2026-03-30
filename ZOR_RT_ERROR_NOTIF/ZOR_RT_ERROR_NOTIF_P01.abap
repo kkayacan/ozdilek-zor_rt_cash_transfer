@@ -43,12 +43,12 @@ CLASS lcl_business IMPLEMENTATION.
 
   METHOD fetch_invalid_trx.
     IF s_retail[] IS INITIAL.
-      SELECT * FROM zor_rt_cash_inval
+      SELECT * FROM zor_cash_inval
         WHERE businessdaydate BETWEEN @p_begda AND @p_endda
         ORDER BY erdat, erzet, go_trans_id
         INTO TABLE @gt_inv.
     ELSE.
-      SELECT * FROM zor_rt_cash_inval
+      SELECT * FROM zor_cash_inval
         WHERE businessdaydate BETWEEN @p_begda AND @p_endda
           AND retailstoreid IN @s_retail
         ORDER BY erdat, erzet, go_trans_id
@@ -286,7 +286,7 @@ CLASS lcl_business IMPLEMENTATION.
   METHOD build_notification_email.
 
     DATA: lv_row TYPE string,
-          ls_inv TYPE zor_rt_cash_inval,
+          ls_inv TYPE zor_cash_inval,
           ls_ka  TYPE ty_kasa_err,
           lv_dat TYPE char10,
           lv_dt  TYPE string,

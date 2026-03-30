@@ -980,7 +980,7 @@ CLASS lcl_pipe_inbound IMPLEMENTATION.
           lv_line_exist      TYPE abap_bool,
           lv_payment_exist   TYPE abap_bool,
           lv_miss_mand       TYPE string,
-          ls_inval           TYPE zor_rt_cash_inval,
+          ls_inval           TYPE zor_cash_inval,
 
 
           lv_date            TYPE c LENGTH 10,
@@ -1128,8 +1128,8 @@ CLASS lcl_pipe_inbound IMPLEMENTATION.
             ls_inval-retailstoreid =
               CONV /posdw/tlogf-retailstoreid( |{ ls_trans-retailstoreid ALPHA = IN }| ).
             ls_inval-reason = lv_miss_mand(30).
-            ls_inval-zbat = COND #( WHEN sy-batch = abap_true THEN 'X' ELSE space ).
-            MODIFY zor_rt_cash_inval FROM ls_inval.
+            ls_inval-zbatch = COND #( WHEN sy-batch = abap_true THEN 'X' ELSE space ).
+            MODIFY zor_cash_inval FROM ls_inval.
 
             APPEND INITIAL LINE TO go_interface->transactions
             ASSIGNING <ls_trns>.

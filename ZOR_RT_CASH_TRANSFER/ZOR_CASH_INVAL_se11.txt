@@ -1,5 +1,5 @@
 *--------------------------------------------------------------------*
-* SE11: Transparent table ZOR_RT_CASH_INVAL
+* SE11: Transparent table ZOR_CASH_INVAL
 * Delivery class: Z
 *--------------------------------------------------------------------*
 * Primary key (öneri):
@@ -16,7 +16,11 @@
 *   BUSINESSDAYDATE   DATS
 *   RETAILSTOREID     /POSDW/RETAILSTOREID
 *   REASON            CHAR 30
-*   ZBAT              CHAR 1
+*   ZBATCH            CHAR 1
+*       Arka plan (batch) işaretçisi: kayıt, ZOR_RT_CASH_TRANSFER çalışırken
+*       sy-batch = abap_true ise 'X', diyalog/ön planda çalışma ise boş.
+*       Böylece hatalı işlem kaydının job ile mi yoksa interaktif oturumla mı
+*       oluşturulduğu ayrıştırılabilir (izleme, raporlama, yeniden işleme).
 *--------------------------------------------------------------------*
-* Not: ABAP kaynaklarında alan adı ZBAT kullanılır (ls_inval-zbat).
+* Not: ABAP kaynaklarında alan adı ZBATCH kullanılır (ls_inval-zbatch).
 *--------------------------------------------------------------------*

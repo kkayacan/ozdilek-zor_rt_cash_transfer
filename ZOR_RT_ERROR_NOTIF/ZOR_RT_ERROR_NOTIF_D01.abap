@@ -47,7 +47,7 @@ CLASS lcl_business DEFINITION FINAL CREATE PUBLIC.
   PUBLIC SECTION.
 
     CLASS-DATA:
-      gt_inv  TYPE STANDARD TABLE OF zor_rt_cash_inval WITH EMPTY KEY,
+      gt_inv  TYPE STANDARD TABLE OF zor_cash_inval WITH EMPTY KEY,
       gt_kasa TYPE tt_kasa_err.
 
     CLASS-METHODS:
