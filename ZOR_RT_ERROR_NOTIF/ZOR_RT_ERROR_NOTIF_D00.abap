@@ -35,7 +35,7 @@ CLASS lcl_controller DEFINITION FINAL CREATE PUBLIC.
         RETURNING VALUE(rt_fcat) TYPE lvc_t_fcat,
       display_alv
         IMPORTING
-          iv_fis TYPE c LENGTH 1,
+          iv_fis TYPE char1,
       free_alv_controls.
 
 ENDCLASS.
