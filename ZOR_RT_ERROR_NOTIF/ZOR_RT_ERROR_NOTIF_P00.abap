@@ -88,8 +88,8 @@ CLASS lcl_controller IMPLEMENTATION.
           lr_list TYPE REF TO data,
           lo_cols TYPE REF TO cl_salv_columns_table,
           lo_aggs TYPE REF TO cl_salv_aggregations.
-    FIELD-SYMBOLS <lt> TYPE ANY TABLE,
-                  <fc> TYPE lvc_s_fcat.
+    FIELD-SYMBOLS: <lt> TYPE ANY TABLE,
+                   <fc> TYPE lvc_s_fcat.
 
     CREATE DATA lr_list LIKE it_table.
     ASSIGN lr_list->* TO <lt>.
@@ -111,6 +111,124 @@ CLASS lcl_controller IMPLEMENTATION.
     ENDLOOP.
   ENDMETHOD.
 
+  METHOD apply_alv_field_labels.
+    DATA lv_fn TYPE char30.
+    FIELD-SYMBOLS <fc> TYPE lvc_s_fcat.
+
+    LOOP AT ct_fcat ASSIGNING <fc>.
+      lv_fn = <fc>-fieldname.
+      TRANSLATE lv_fn TO UPPER CASE.
+
+      IF lv_fn = 'MANDT'.
+        <fc>-tech = abap_true.
+        CONTINUE.
+      ENDIF.
+
+      IF iv_fis = 'X'.
+        CASE lv_fn.
+          WHEN 'ERDAT'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f01.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-datatype = 'DATS'.
+            <fc>-inttype  = 'D'.
+            <fc>-outputlen = 10.
+            CLEAR: <fc>-currency, <fc>-cfieldname, <fc>-quantity, <fc>-qfieldname,
+                   <fc>-ref_table, <fc>-ref_field.
+          WHEN 'ERZET'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f02.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-datatype = 'TIMS'.
+            <fc>-inttype  = 'T'.
+            <fc>-outputlen = 8.
+            CLEAR: <fc>-currency, <fc>-cfieldname, <fc>-quantity, <fc>-qfieldname,
+                   <fc>-ref_table, <fc>-ref_field.
+          WHEN 'GO_TRANS_ID'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f03.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'RECEIPT_BARCODE'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f04.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'FK_STORE'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f05.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'FK_POS'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f06.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'BUSINESSDAYDATE'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f07.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-datatype = 'DATS'.
+            <fc>-inttype  = 'D'.
+            <fc>-outputlen = 10.
+            CLEAR: <fc>-currency, <fc>-cfieldname, <fc>-quantity, <fc>-qfieldname,
+                   <fc>-ref_table, <fc>-ref_field.
+          WHEN 'RETAILSTOREID'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f08.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'REASON'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f09.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'ZBATCH'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f22.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'ERNAM'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f23.
+            <fc>-reptext = <fc>-coltext.
+        ENDCASE.
+      ELSE.
+        CASE lv_fn.
+          WHEN 'MAGAZA_ADI'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f10.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'URETIM_YERI'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f11.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'FK_POS'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f12.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'KASA_NO'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f13.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'IP_ADRESI'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f14.
+            <fc>-reptext = <fc>-coltext.
+          WHEN 'TARIH'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f15.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-datatype = 'DATS'.
+            <fc>-inttype  = 'D'.
+            <fc>-outputlen = 10.
+            CLEAR: <fc>-currency, <fc>-cfieldname, <fc>-quantity, <fc>-qfieldname,
+                   <fc>-ref_table, <fc>-ref_field.
+          WHEN 'SATIS_BW'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f16.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-decimals_o = 2.
+          WHEN 'SATIS_SAP'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f17.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-decimals_o = 2.
+          WHEN 'DIFF_SATIS'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f18.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-decimals_o = 2.
+          WHEN 'IADE_BW'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f19.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-decimals_o = 2.
+          WHEN 'IADE_SAP'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f20.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-decimals_o = 2.
+          WHEN 'DIFF_IADE'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f21.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-decimals_o = 2.
+        ENDCASE.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
   METHOD display_alv.
     DATA: lt_fcat TYPE lvc_t_fcat,
           ls_stbl TYPE lvc_s_stbl.
@@ -123,6 +241,12 @@ CLASS lcl_controller IMPLEMENTATION.
     ELSE.
       lt_fcat = build_fcat( lcl_business=>gt_kasa ).
     ENDIF.
+
+    apply_alv_field_labels(
+      EXPORTING
+        iv_fis = iv_fis
+      CHANGING
+        ct_fcat = lt_fcat ).
 
     IF go_grid IS NOT BOUND.
 
@@ -174,6 +298,7 @@ CLASS lcl_controller IMPLEMENTATION.
 
     ELSE.
 
+      go_grid->set_frontend_fieldcatalog( lt_fcat ).
       go_grid->set_frontend_layout( gs_layo ).
 
       ls_stbl-row = abap_true.

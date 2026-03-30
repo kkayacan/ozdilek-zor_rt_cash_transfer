@@ -38,9 +38,9 @@ CLASS lcl_technical IMPLEMENTATION.
         COMMIT WORK.
       CATCH cx_bcs INTO DATA(lx_bcs).
         ROLLBACK WORK.
-        DATA(lv_bcs) TYPE string.
+        DATA lv_bcs TYPE string.
         lv_bcs = lx_bcs->get_text( ).
-        MESSAGE e035 WITH lv_bcs(132).
+        MESSAGE e035 WITH lv_bcs.
     ENDTRY.
 
   ENDMETHOD.

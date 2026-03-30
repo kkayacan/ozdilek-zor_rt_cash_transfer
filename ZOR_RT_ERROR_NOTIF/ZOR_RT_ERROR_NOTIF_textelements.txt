@@ -39,3 +39,7 @@
 * F19  İade BW
 * F20  İade SAP
 * F21  Fark iade
+*
+* ALV / e-posta ek (ZOR_CASH_INVAL)
+* F22  Batch
+* F23  Kullanıcı

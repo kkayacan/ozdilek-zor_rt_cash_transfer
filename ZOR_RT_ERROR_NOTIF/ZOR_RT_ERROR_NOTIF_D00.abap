@@ -33,6 +33,9 @@ CLASS lcl_controller DEFINITION FINAL CREATE PUBLIC.
       build_fcat
         IMPORTING it_table       TYPE ANY TABLE
         RETURNING VALUE(rt_fcat) TYPE lvc_t_fcat,
+      apply_alv_field_labels
+        IMPORTING iv_fis TYPE char1
+        CHANGING  ct_fcat TYPE lvc_t_fcat,
       display_alv
         IMPORTING
           iv_fis TYPE char1,

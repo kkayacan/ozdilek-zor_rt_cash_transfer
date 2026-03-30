@@ -34,7 +34,7 @@ CLASS lcl_business IMPLEMENTATION.
             MESSAGE e007 WITH lv_int.
           ENDIF.
         CATCH cx_root INTO DATA(lx_root).
-          DATA(lv_err) TYPE c LENGTH 132.
+          DATA lv_err TYPE c LENGTH 132.
           lv_err = lx_root->get_text( ).
           MESSAGE e007 WITH lv_err.
       ENDTRY.
@@ -42,18 +42,11 @@ CLASS lcl_business IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD fetch_invalid_trx.
-    IF s_retail[] IS INITIAL.
-      SELECT * FROM zor_cash_inval
-        WHERE businessdaydate BETWEEN @p_begda AND @p_endda
-        ORDER BY erdat, erzet, go_trans_id
-        INTO TABLE @gt_inv.
-    ELSE.
-      SELECT * FROM zor_cash_inval
-        WHERE businessdaydate BETWEEN @p_begda AND @p_endda
-          AND retailstoreid IN @s_retail
-        ORDER BY erdat, erzet, go_trans_id
-        INTO TABLE @gt_inv.
-    ENDIF.
+    SELECT * FROM zor_cash_inval
+      WHERE businessdaydate BETWEEN @p_begda AND @p_endda
+        AND retailstoreid IN @s_retail
+      ORDER BY erdat, erzet, go_trans_id
+      INTO TABLE @gt_inv.
   ENDMETHOD.
 
   METHOD fetch_genius_bw.
@@ -260,15 +253,63 @@ CLASS lcl_business IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD parse_sql_date.
+    DATA: lv_src  TYPE string,
+          lv_date TYPE string.
+
     CLEAR rv_datum.
-    IF strlen( iv_str ) < 10.
+    lv_src = iv_str.
+    CONDENSE lv_src NO-GAPS.
+
+    IF lv_src IS INITIAL.
       RETURN.
     ENDIF.
+
+    IF strlen( lv_src ) >= 10.
+      lv_date = lv_src(10).
+    ELSE.
+      lv_date = lv_src.
+    ENDIF.
+
     TRY.
-        rv_datum = iv_str+0(4) && iv_str+5(2) && iv_str+8(2).
+        IF strlen( lv_date ) = 10
+           AND lv_date+4(1) = '-'
+           AND lv_date+7(1) = '-'.
+
+          " YYYY-MM-DD
+          rv_datum = lv_date+0(4) && lv_date+5(2) && lv_date+8(2).
+
+        ELSEIF strlen( lv_date ) = 10
+           AND ( lv_date+2(1) = '.' OR lv_date+2(1) = '/' )
+           AND ( lv_date+5(1) = '.' OR lv_date+5(1) = '/' ).
+
+          " DD.MM.YYYY or DD/MM/YYYY
+          rv_datum = lv_date+6(4) && lv_date+3(2) && lv_date+0(2).
+
+        ELSEIF strlen( lv_date ) = 8
+           AND lv_date CO '0123456789'.
+
+          " YYYYMMDD or DDMMYYYY
+          IF lv_date+0(4) BETWEEN '1900' AND '2999'.
+            rv_datum = lv_date.
+          ELSE.
+            rv_datum = lv_date+4(4) && lv_date+2(2) && lv_date+0(2).
+          ENDIF.
+        ENDIF.
       CATCH cx_root.
         CLEAR rv_datum.
     ENDTRY.
+
+    IF rv_datum IS NOT INITIAL.
+      CALL FUNCTION 'DATE_CHECK_PLAUSIBILITY'
+        EXPORTING
+          date                      = rv_datum
+        EXCEPTIONS
+          plausibility_check_failed = 1
+          OTHERS                    = 2.
+      IF sy-subrc <> 0.
+        CLEAR rv_datum.
+      ENDIF.
+    ENDIF.
   ENDMETHOD.
 
   METHOD parse_dec_string.
