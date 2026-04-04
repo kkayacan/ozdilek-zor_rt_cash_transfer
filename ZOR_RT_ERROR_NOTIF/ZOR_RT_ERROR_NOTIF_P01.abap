@@ -338,8 +338,11 @@ CLASS lcl_business IMPLEMENTATION.
 
     lv_dt = |{ sy-datum DATE = ISO }|.
     lv_tm = |{ sy-uzeit TIME = ISO }|.
-    lv_sub = |{ text-m00 } { lv_dt }|.
-    ev_subject = CONV #( lv_sub(50) ).
+    lv_sub = |{ text-m05 } — { lv_dt }|.
+    IF strlen( sy-sysid ) >= 3 AND sy-sysid+2(1) <> 'P'.
+      lv_sub = |[{ sy-sysid }] { lv_sub }|.
+    ENDIF.
+    ev_subject = CONV so_obj_des( lv_sub ).
 
     ev_html =
       |<html><head><style>| &&

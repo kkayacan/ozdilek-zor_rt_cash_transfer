@@ -1103,6 +1103,9 @@ CLASS lcl_pipe_inbound IMPLEMENTATION.
 
 *--------------------------------------------------------------------*
 * Eksik TRANSACTION_SALE / PAYMENT / RESULT: POSDM kuyruğu yok, Z yok
+* Eksiklik her fişte hesaplanır; ZOR_CASH_INVAL + CONTINUE (EXPORT_LOG
+* OPERATION_TYPE değişmez; takip ZOR_CASH_INVAL üzerinden). Yalnızca
+* başlık STATUS=0 (başarılı fiş). İptal fişler akışa devam eder.
 *--------------------------------------------------------------------*
           CLEAR lv_miss_mand.
           IF lines( ls_go-sale ) = 0.
@@ -1114,7 +1117,7 @@ CLASS lcl_pipe_inbound IMPLEMENTATION.
           IF lines( ls_go-result ) = 0.
             lv_miss_mand = |{ lv_miss_mand }RES;|.
           ENDIF.
-          IF lv_miss_mand IS NOT INITIAL.
+          IF lv_miss_mand IS NOT INITIAL AND ls_go-header-status = '0'.
             CLEAR ls_inval.
             ls_inval-mandt = sy-mandt.
             ls_inval-go_trans_id = CONV #( ls_go-header-id ).
@@ -1127,16 +1130,9 @@ CLASS lcl_pipe_inbound IMPLEMENTATION.
             ls_inval-businessdaydate = ls_trans-businessdaydate.
             ls_inval-retailstoreid =
               CONV /posdw/tlogf-retailstoreid( |{ ls_trans-retailstoreid ALPHA = IN }| ).
-            ls_inval-reason = lv_miss_mand(30).
+            ls_inval-reason = lv_miss_mand.
             ls_inval-zbatch = COND #( WHEN sy-batch = abap_true THEN 'X' ELSE space ).
             MODIFY zor_cash_inval FROM ls_inval.
-
-            APPEND INITIAL LINE TO go_interface->transactions
-            ASSIGNING <ls_trns>.
-            <ls_trns>-id              = ls_go-header-id.
-            <ls_trns>-retailstoreid   = ls_trans-retailstoreid.
-            <ls_trns>-businessdaydate = ls_trans-businessdaydate.
-            <ls_trns>-operationtype   = 'K'.
 
             CLEAR ls_trans.
             CONTINUE.

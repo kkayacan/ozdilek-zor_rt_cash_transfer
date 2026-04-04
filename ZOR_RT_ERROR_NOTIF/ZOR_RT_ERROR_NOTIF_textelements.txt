@@ -10,6 +10,8 @@
 *
 * E-posta gövdesi / konu
 * M00  ZOR_RT_ERROR_NOTIF
+* M05  Perakende kontrol bildirimi
+*      (e-posta konusu; tarih kodda eklenir — canlı dışı: [SYSID] öneki)
 * M01  POS / Genius kontrol özeti —
 * M02  Hatalı işlemler (eksik tablo)
 * M03  Kayıt yok
