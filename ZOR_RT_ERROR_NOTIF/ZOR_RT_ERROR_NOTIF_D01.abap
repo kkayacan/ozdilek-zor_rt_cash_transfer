@@ -42,14 +42,46 @@ TYPES:
   END OF ty_sap_agg,
   tt_sap_agg TYPE SORTED TABLE OF ty_sap_agg
     WITH UNIQUE KEY retailstoreid businessdaydate workstationid,
-  tt_cash_inval TYPE STANDARD TABLE OF zor_cash_inval WITH EMPTY KEY.
+  BEGIN OF ty_inv_err,
+    trans_date      TYPE datum,
+    trans_time      TYPE uzeit,
+    go_trans_id     TYPE string,
+    receipt_barcode TYPE string,
+    fk_store        TYPE string,
+    fk_pos          TYPE string,
+    businessdaydate TYPE datum,
+    retailstoreid   TYPE /posdw/tlogf-retailstoreid,
+    reason          TYPE string,
+  END OF ty_inv_err,
+  tt_inv_err TYPE STANDARD TABLE OF ty_inv_err WITH EMPTY KEY,
+  BEGIN OF ty_genius_header,
+    id              TYPE string,
+    fk_store        TYPE string,
+    fk_pos          TYPE string,
+    trans_date      TYPE string,
+    receipt_barcode TYPE string,
+    ptype           TYPE string,
+    status          TYPE string,
+  END OF ty_genius_header,
+  tt_genius_header TYPE STANDARD TABLE OF ty_genius_header WITH EMPTY KEY,
+  BEGIN OF ty_kasa_scope,
+    uretim_yeri TYPE string,
+    fk_pos      TYPE string,
+    tarih       TYPE datum,
+  END OF ty_kasa_scope,
+  tt_kasa_scope TYPE SORTED TABLE OF ty_kasa_scope
+    WITH UNIQUE KEY uretim_yeri fk_pos tarih,
+  BEGIN OF ty_genius_key,
+    id TYPE string,
+  END OF ty_genius_key,
+  tt_genius_key TYPE STANDARD TABLE OF ty_genius_key WITH EMPTY KEY.
 
 CLASS lcl_business DEFINITION FINAL CREATE PUBLIC.
 
   PUBLIC SECTION.
 
     CLASS-DATA:
-      gt_inv  TYPE tt_cash_inval,
+      gt_inv  TYPE tt_inv_err,
       gt_kasa TYPE tt_kasa_err.
 
     CLASS-METHODS:
@@ -63,9 +95,25 @@ CLASS lcl_business DEFINITION FINAL CREATE PUBLIC.
   PRIVATE SECTION.
 
     CLASS-METHODS:
-      fetch_invalid_trx,
+      fetch_invalid_trx
+        IMPORTING it_kasa          TYPE tt_kasa_err
+        RETURNING VALUE(rt_inv)    TYPE tt_inv_err
+        RAISING cx_sql_exception,
       fetch_genius_bw
         RETURNING VALUE(rt_bw) TYPE tt_bw_sql
+        RAISING cx_sql_exception,
+      fetch_genius_headers
+        IMPORTING is_kasa             TYPE ty_kasa_err
+        RETURNING VALUE(rt_headers)   TYPE tt_genius_header
+        RAISING cx_sql_exception,
+      check_header_missing
+        IMPORTING is_header           TYPE ty_genius_header
+        RETURNING VALUE(rv_reason)    TYPE string
+        RAISING cx_sql_exception,
+      has_genius_rows
+        IMPORTING iv_table            TYPE string
+                  iv_header_id        TYPE string
+        RETURNING VALUE(rv_exists)    TYPE abap_bool
         RAISING cx_sql_exception,
       build_sap_aggregates
         RETURNING VALUE(rt_agg) TYPE tt_sap_agg,
@@ -78,6 +126,9 @@ CLASS lcl_business DEFINITION FINAL CREATE PUBLIC.
         RETURNING VALUE(rv_dec)    TYPE /posdw/transturnover,
       parse_sql_date
         IMPORTING iv_str           TYPE string
-        RETURNING VALUE(rv_datum)  TYPE datum.
+        RETURNING VALUE(rv_datum)  TYPE datum,
+      parse_sql_time
+        IMPORTING iv_str           TYPE string
+        RETURNING VALUE(rv_uzeit)  TYPE uzeit.
 
 ENDCLASS.

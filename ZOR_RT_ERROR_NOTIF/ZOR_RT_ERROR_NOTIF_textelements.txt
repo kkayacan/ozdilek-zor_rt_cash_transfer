@@ -18,8 +18,8 @@
 * M04  Hatalı kasalar (BW - SAP)
 *
 * Tablo kolon başlıkları (hatalı işlem listesi)
-* F01  ERDAT
-* F02  ERZET
+* F01  İşlem tarihi
+* F02  İşlem saati
 * F03  GO_TRANS_ID
 * F04  Barkod
 * F05  Mağaza
@@ -41,7 +41,3 @@
 * F19  İade BW
 * F20  İade SAP
 * F21  Fark iade
-*
-* ALV / e-posta ek (ZOR_CASH_INVAL)
-* F22  Batch
-* F23  Kullanıcı

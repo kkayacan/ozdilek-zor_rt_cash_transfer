@@ -30,7 +30,10 @@ CLASS lcl_controller IMPLEMENTATION.
     lcl_business=>refresh_data( ).
     IF p_mail = 'X'.
       DATA: lv_html    TYPE string,
-            lv_subject TYPE so_obj_des.
+            lv_subject TYPE so_obj_des,
+            lv_k_cnt   TYPE i,
+            lv_i_cnt   TYPE i.
+
       CALL METHOD lcl_business=>build_notification_email
         IMPORTING
           ev_html    = lv_html
@@ -39,6 +42,19 @@ CLASS lcl_controller IMPLEMENTATION.
         EXPORTING
           iv_html    = lv_html
           iv_subject = lv_subject.
+
+      lv_k_cnt = lines( lcl_business=>gt_kasa ).
+      lv_i_cnt = lines( lcl_business=>gt_inv ).
+
+      WRITE: / 'ZOR_RT_ERROR_NOTIF — E-Posta Gönderim Logu'.
+      WRITE: / sy-uline.
+      WRITE: / 'Kontrol Edilen Dönem :', p_begda, '-', p_endda.
+      WRITE: / 'Fark Bulunan Kasa Sayısı :', lv_k_cnt.
+      WRITE: / 'Eksik Tablolu Fiş Sayısı :', lv_i_cnt.
+      WRITE: / sy-uline.
+      WRITE: / 'Gönderilen e-posta konusu:', lv_subject.
+      WRITE: / 'İşlem tamamlandı, e-posta gönderildi.'.
+
       RETURN.
     ENDIF.
     IF p_disp = 'X' AND sy-batch IS INITIAL.
@@ -126,7 +142,7 @@ CLASS lcl_controller IMPLEMENTATION.
 
       IF iv_fis = 'X'.
         CASE lv_fn.
-          WHEN 'ERDAT'.
+          WHEN 'TRANS_DATE'.
             <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f01.
             <fc>-reptext = <fc>-coltext.
             <fc>-datatype = 'DATS'.
@@ -134,7 +150,7 @@ CLASS lcl_controller IMPLEMENTATION.
             <fc>-outputlen = 10.
             CLEAR: <fc>-currency, <fc>-cfieldname, <fc>-quantity, <fc>-qfieldname,
                    <fc>-ref_table, <fc>-ref_field.
-          WHEN 'ERZET'.
+          WHEN 'TRANS_TIME'.
             <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f02.
             <fc>-reptext = <fc>-coltext.
             <fc>-datatype = 'TIMS'.
@@ -167,12 +183,6 @@ CLASS lcl_controller IMPLEMENTATION.
             <fc>-reptext = <fc>-coltext.
           WHEN 'REASON'.
             <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f09.
-            <fc>-reptext = <fc>-coltext.
-          WHEN 'ZBATCH'.
-            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f22.
-            <fc>-reptext = <fc>-coltext.
-          WHEN 'ERNAM'.
-            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f23.
             <fc>-reptext = <fc>-coltext.
         ENDCASE.
       ELSE.

@@ -11,42 +11,178 @@ CLASS lcl_business IMPLEMENTATION.
 
   METHOD refresh_data.
     CLEAR: gt_inv, gt_kasa.
+    TRY.
+        DATA(lt_bw) = fetch_genius_bw( ).
+        DATA(lt_agg) = build_sap_aggregates( ).
+        gt_kasa = compare_bw_sap( it_bw = lt_bw it_agg = lt_agg ).
 
-    IF p_mail = 'X' OR p_fis = 'X'.
-      fetch_invalid_trx( ).
-    ENDIF.
+        IF p_mail = 'X' OR p_fis = 'X'.
+          gt_inv = fetch_invalid_trx( gt_kasa ).
+        ENDIF.
 
-    IF p_mail = 'X' OR p_kasa = 'X'.
-      TRY.
-          DATA(lt_bw) = fetch_genius_bw( ).
-          DATA(lt_agg) = build_sap_aggregates( ).
-          gt_kasa = compare_bw_sap( it_bw = lt_bw it_agg = lt_agg ).
-        CATCH cx_sql_exception INTO DATA(lx_sql).
-          DATA: lv_sqltxt TYPE c LENGTH 120,
-                lv_sqlcod TYPE c LENGTH 10,
-                lv_int    TYPE c LENGTH 132.
-          IF lx_sql->db_error = 'X'.
-            lv_sqltxt = lx_sql->sql_message.
-            lv_sqlcod = lx_sql->sql_code.
-            MESSAGE e006 WITH lv_sqlcod lv_sqltxt.
-          ELSE.
-            lv_int = lx_sql->internal_error.
-            MESSAGE e007 WITH lv_int.
-          ENDIF.
-        CATCH cx_root INTO DATA(lx_root).
-          DATA lv_err TYPE c LENGTH 132.
-          lv_err = lx_root->get_text( ).
-          MESSAGE e007 WITH lv_err.
-      ENDTRY.
-    ENDIF.
+      CATCH cx_sql_exception INTO DATA(lx_sql).
+        DATA: lv_sqltxt TYPE c LENGTH 120,
+              lv_sqlcod TYPE c LENGTH 10,
+              lv_int    TYPE c LENGTH 132.
+        IF lx_sql->db_error = 'X'.
+          lv_sqltxt = lx_sql->sql_message.
+          lv_sqlcod = lx_sql->sql_code.
+          MESSAGE e006 WITH lv_sqlcod lv_sqltxt.
+        ELSE.
+          lv_int = lx_sql->internal_error.
+          MESSAGE e007 WITH lv_int.
+        ENDIF.
+      CATCH cx_root INTO DATA(lx_root).
+        DATA lv_err TYPE c LENGTH 132.
+        lv_err = lx_root->get_text( ).
+        MESSAGE e007 WITH lv_err.
+    ENDTRY.
   ENDMETHOD.
 
   METHOD fetch_invalid_trx.
-    SELECT * FROM zor_cash_inval
-      WHERE businessdaydate BETWEEN @p_begda AND @p_endda
-        AND retailstoreid IN @s_retail
-      ORDER BY erdat, erzet, go_trans_id
-      INTO TABLE @gt_inv.
+    DATA: lt_scope         TYPE tt_kasa_scope,
+          ls_scope         TYPE ty_kasa_scope,
+          ls_kasa          TYPE ty_kasa_err,
+          ls_header        TYPE ty_genius_header,
+          ls_inv           TYPE ty_inv_err,
+          lv_reason        TYPE string,
+          lv_retailstoreid TYPE /posdw/tlogf-retailstoreid.
+
+    CLEAR rt_inv.
+
+    LOOP AT it_kasa INTO ls_kasa.
+      INSERT VALUE #(
+        uretim_yeri = ls_kasa-uretim_yeri
+        fk_pos      = ls_kasa-fk_pos
+        tarih       = ls_kasa-tarih ) INTO TABLE lt_scope.
+    ENDLOOP.
+
+    LOOP AT lt_scope INTO ls_scope.
+      CLEAR ls_kasa.
+      ls_kasa-uretim_yeri = ls_scope-uretim_yeri.
+      ls_kasa-fk_pos      = ls_scope-fk_pos.
+      ls_kasa-tarih       = ls_scope-tarih.
+
+      DATA(lt_headers) = fetch_genius_headers( ls_kasa ).
+      LOOP AT lt_headers INTO ls_header.
+        lv_reason = check_header_missing( ls_header ).
+        IF lv_reason IS INITIAL.
+          CONTINUE.
+        ENDIF.
+
+        CLEAR: ls_inv, lv_retailstoreid.
+
+        CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+          EXPORTING
+            input  = ls_header-fk_store
+          IMPORTING
+            output = lv_retailstoreid.
+
+        ls_inv-trans_date      = parse_sql_date( ls_header-trans_date ).
+        ls_inv-trans_time      = parse_sql_time( ls_header-trans_date ).
+        ls_inv-go_trans_id     = ls_header-id.
+        ls_inv-receipt_barcode = ls_header-receipt_barcode.
+        ls_inv-fk_store        = ls_header-fk_store.
+        ls_inv-fk_pos          = ls_header-fk_pos.
+        ls_inv-businessdaydate = COND #(
+          WHEN ls_inv-trans_date IS NOT INITIAL THEN ls_inv-trans_date
+          ELSE ls_scope-tarih ).
+        ls_inv-retailstoreid   = lv_retailstoreid.
+        ls_inv-reason          = lv_reason.
+        APPEND ls_inv TO rt_inv.
+      ENDLOOP.
+    ENDLOOP.
+
+    SORT rt_inv BY trans_date trans_time go_trans_id.
+  ENDMETHOD.
+
+  METHOD fetch_genius_headers.
+
+    DATA: lv_sql   TYPE string,
+          lv_date  TYPE string,
+          lv_store TYPE string,
+          lv_pos   TYPE string.
+
+    CLEAR rt_headers.
+
+    lv_store = is_kasa-uretim_yeri.
+    lv_pos   = is_kasa-fk_pos.
+    lv_date  = |{ is_kasa-tarih+0(4) }-{ is_kasa-tarih+4(2) }-{ is_kasa-tarih+6(2) }|.
+
+    lv_sql =
+      |SELECT ID, FK_STORE, FK_POS, TRANS_DATE, RECEIPT_BARCODE, PTYPE, STATUS | &&
+      |FROM TRANSACTION_HEADER WITH (NOLOCK) | &&
+      |WHERE FK_STORE = ? AND FK_POS = ? AND CONVERT(date, TRANS_DATE) = ? AND STATUS = 0 | &&
+      |ORDER BY TRANS_DATE, ID|.
+
+    DATA(lo_con) = cl_sql_connection=>get_connection( gc_dbcon_genius3 ).
+    DATA(lo_stmt) = lo_con->create_statement( tab_name_for_trace = 'TRANSACTION_HEADER' ).
+
+    lo_stmt->set_param( REF #( lv_store ) ).
+    lo_stmt->set_param( REF #( lv_pos ) ).
+    lo_stmt->set_param( REF #( lv_date ) ).
+
+    DATA(lo_res) = lo_stmt->execute_query( lv_sql ).
+
+    lo_res->set_param_table( REF #( rt_headers ) ).
+    lo_res->next_package( ).
+    lo_res->close( ).
+
+  ENDMETHOD.
+
+  METHOD check_header_missing.
+
+    CLEAR rv_reason.
+
+    IF has_genius_rows(
+         iv_table     = 'TRANSACTION_SALE'
+         iv_header_id = is_header-id ) = abap_false.
+      rv_reason = |SALE;|.
+    ENDIF.
+
+    IF is_header-ptype <> '7'
+       AND has_genius_rows(
+             iv_table     = 'TRANSACTION_PAYMENT'
+             iv_header_id = is_header-id ) = abap_false.
+      rv_reason = |{ rv_reason }PAY;|.
+    ENDIF.
+
+    IF has_genius_rows(
+         iv_table     = 'TRANSACTION_RESULT'
+         iv_header_id = is_header-id ) = abap_false.
+      rv_reason = |{ rv_reason }RES;|.
+    ENDIF.
+
+  ENDMETHOD.
+
+  METHOD has_genius_rows.
+
+    DATA: lv_sql   TYPE string,
+          lv_table TYPE string,
+          lt_key   TYPE tt_genius_key.
+
+    CLEAR rv_exists.
+
+    CASE iv_table.
+      WHEN 'TRANSACTION_SALE' OR 'TRANSACTION_PAYMENT' OR 'TRANSACTION_RESULT'.
+        lv_table = iv_table.
+      WHEN OTHERS.
+        RETURN.
+    ENDCASE.
+
+    lv_sql = |SELECT TOP 1 ID FROM { lv_table } WITH (NOLOCK) WHERE FK_TRANSACTION_HEADER = ?|.
+
+    DATA(lo_con) = cl_sql_connection=>get_connection( gc_dbcon_genius3 ).
+    DATA(lo_stmt) = lo_con->create_statement( tab_name_for_trace = conv TABNAME( lv_table ) ).
+
+    lo_stmt->set_param( REF #( iv_header_id ) ).
+
+    DATA(lo_res) = lo_stmt->execute_query( lv_sql ).
+    lo_res->set_param_table( REF #( lt_key ) ).
+    lo_res->next_package( ).
+    lo_res->close( ).
+
+    rv_exists = xsdbool( lt_key IS NOT INITIAL ).
   ENDMETHOD.
 
   METHOD fetch_genius_bw.
@@ -312,6 +448,33 @@ CLASS lcl_business IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 
+  METHOD parse_sql_time.
+    DATA lv_src TYPE string.
+
+    CLEAR rv_uzeit.
+    lv_src = iv_str.
+    CONDENSE lv_src.
+
+    TRY.
+        IF strlen( lv_src ) >= 19
+           AND lv_src+4(1) = '-'
+           AND lv_src+7(1) = '-'
+           AND ( lv_src+10(1) = space OR lv_src+10(1) = 'T' ).
+
+          rv_uzeit = lv_src+11(2) && lv_src+14(2) && lv_src+17(2).
+
+        ELSEIF strlen( lv_src ) >= 19
+           AND ( lv_src+2(1) = '.' OR lv_src+2(1) = '/' )
+           AND ( lv_src+5(1) = '.' OR lv_src+5(1) = '/' )
+           AND ( lv_src+10(1) = space OR lv_src+10(1) = 'T' ).
+
+          rv_uzeit = lv_src+11(2) && lv_src+14(2) && lv_src+17(2).
+        ENDIF.
+      CATCH cx_root.
+        CLEAR rv_uzeit.
+    ENDTRY.
+  ENDMETHOD.
+
   METHOD parse_dec_string.
     DATA lv TYPE string.
     lv = iv_str.
@@ -327,7 +490,7 @@ CLASS lcl_business IMPLEMENTATION.
   METHOD build_notification_email.
 
     DATA: lv_row TYPE string,
-          ls_inv TYPE zor_cash_inval,
+          ls_inv TYPE ty_inv_err,
           ls_ka  TYPE ty_kasa_err,
           lv_dat TYPE char10,
           lv_dt  TYPE string,
@@ -372,9 +535,9 @@ CLASS lcl_business IMPLEMENTATION.
         text-m03 && |</td></tr>|.
     ELSE.
       LOOP AT gt_inv INTO ls_inv.
-        WRITE ls_inv-erdat TO lv_dat.
+        WRITE ls_inv-trans_date TO lv_dat.
         lv_row = |<tr><td>{ lcl_technical=>escape_html( CONV string( lv_dat ) ) }</td>| &&
-                 |<td>{ lcl_technical=>escape_html( CONV string( ls_inv-erzet ) ) }</td>| &&
+                 |<td>{ lcl_technical=>escape_html( |{ ls_inv-trans_time TIME = ISO }| ) }</td>| &&
                  |<td>{ lcl_technical=>escape_html( CONV string( ls_inv-go_trans_id ) ) }</td>| &&
                  |<td>{ lcl_technical=>escape_html( CONV string( ls_inv-receipt_barcode ) ) }</td>| &&
                  |<td>{ lcl_technical=>escape_html( CONV string( ls_inv-fk_store ) ) }</td>| &&
