@@ -20,10 +20,13 @@ CLASS lcl_business IMPLEMENTATION.
           gt_inv = fetch_invalid_trx( gt_kasa ).
         ENDIF.
 
+        close_genius_connection( ).
+
       CATCH cx_sql_exception INTO DATA(lx_sql).
         DATA: lv_sqltxt TYPE c LENGTH 120,
               lv_sqlcod TYPE c LENGTH 10,
               lv_int    TYPE c LENGTH 132.
+        close_genius_connection( ).
         IF lx_sql->db_error = 'X'.
           lv_sqltxt = lx_sql->sql_message.
           lv_sqlcod = lx_sql->sql_code.
@@ -34,9 +37,27 @@ CLASS lcl_business IMPLEMENTATION.
         ENDIF.
       CATCH cx_root INTO DATA(lx_root).
         DATA lv_err TYPE c LENGTH 132.
+        close_genius_connection( ).
         lv_err = lx_root->get_text( ).
         MESSAGE e007 WITH lv_err.
     ENDTRY.
+  ENDMETHOD.
+
+  METHOD get_genius_connection.
+    IF go_genius_con IS NOT BOUND.
+      go_genius_con = cl_sql_connection=>get_connection( gc_dbcon_genius3 ).
+    ENDIF.
+    ro_con = go_genius_con.
+  ENDMETHOD.
+
+  METHOD close_genius_connection.
+    IF go_genius_con IS BOUND.
+      TRY.
+          go_genius_con->close( ).
+        CATCH cx_root.
+      ENDTRY.
+      CLEAR go_genius_con.
+    ENDIF.
   ENDMETHOD.
 
   METHOD fetch_invalid_trx.
@@ -98,27 +119,31 @@ CLASS lcl_business IMPLEMENTATION.
 
   METHOD fetch_genius_headers.
 
-    DATA: lv_sql   TYPE string,
-          lv_date  TYPE string,
-          lv_store TYPE string,
-          lv_pos   TYPE string.
+    DATA: lv_sql         TYPE string,
+          lv_date        TYPE string,
+          lv_uretim_yeri TYPE string,
+          lv_pos         TYPE string.
 
     CLEAR rt_headers.
 
-    lv_store = is_kasa-uretim_yeri.
-    lv_pos   = is_kasa-fk_pos.
-    lv_date  = |{ is_kasa-tarih+0(4) }-{ is_kasa-tarih+4(2) }-{ is_kasa-tarih+6(2) }|.
+    lv_uretim_yeri = is_kasa-uretim_yeri.
+    lv_pos         = is_kasa-fk_pos.
+    lv_date        = |{ is_kasa-tarih+0(4) }-{ is_kasa-tarih+4(2) }-{ is_kasa-tarih+6(2) }|.
 
     lv_sql =
-      |SELECT ID, FK_STORE, FK_POS, TRANS_DATE, RECEIPT_BARCODE, PTYPE, STATUS | &&
-      |FROM TRANSACTION_HEADER WITH (NOLOCK) | &&
-      |WHERE FK_STORE = ? AND FK_POS = ? AND CONVERT(date, TRANS_DATE) = ? AND STATUS = 0 | &&
-      |ORDER BY TRANS_DATE, ID|.
+      |SELECT TH.ID, TH.FK_STORE, TH.FK_POS, TH.TRANS_DATE, | &&
+      |TH.RECEIPT_BARCODE, TH.PTYPE, TH.STATUS | &&
+      |FROM TRANSACTION_HEADER TH WITH (NOLOCK) | &&
+      |INNER JOIN POS2 P2 WITH (NOLOCK) ON P2.ID = TH.FK_POS | &&
+      |INNER JOIN STORE S2 WITH (NOLOCK) ON S2.ID = P2.FK_STORE | &&
+      |WHERE S2.NUM = ? AND TH.FK_POS = ? | &&
+      |AND CONVERT(date, TH.TRANS_DATE) = ? AND TH.STATUS = 0 | &&
+      |ORDER BY TH.TRANS_DATE, TH.ID|.
 
-    DATA(lo_con) = cl_sql_connection=>get_connection( gc_dbcon_genius3 ).
+    DATA(lo_con) = get_genius_connection( ).
     DATA(lo_stmt) = lo_con->create_statement( tab_name_for_trace = 'TRANSACTION_HEADER' ).
 
-    lo_stmt->set_param( REF #( lv_store ) ).
+    lo_stmt->set_param( REF #( lv_uretim_yeri ) ).
     lo_stmt->set_param( REF #( lv_pos ) ).
     lo_stmt->set_param( REF #( lv_date ) ).
 
@@ -140,8 +165,7 @@ CLASS lcl_business IMPLEMENTATION.
       rv_reason = |SALE;|.
     ENDIF.
 
-    IF is_header-ptype <> '7'
-       AND has_genius_rows(
+    IF has_genius_rows(
              iv_table     = 'TRANSACTION_PAYMENT'
              iv_header_id = is_header-id ) = abap_false.
       rv_reason = |{ rv_reason }PAY;|.
@@ -172,7 +196,7 @@ CLASS lcl_business IMPLEMENTATION.
 
     lv_sql = |SELECT TOP 1 ID FROM { lv_table } WITH (NOLOCK) WHERE FK_TRANSACTION_HEADER = ?|.
 
-    DATA(lo_con) = cl_sql_connection=>get_connection( gc_dbcon_genius3 ).
+    DATA(lo_con) = get_genius_connection( ).
     DATA(lo_stmt) = lo_con->create_statement( tab_name_for_trace = conv TABNAME( lv_table ) ).
 
     lo_stmt->set_param( REF #( iv_header_id ) ).
@@ -234,7 +258,7 @@ CLASS lcl_business IMPLEMENTATION.
 
     CLEAR rt_bw.
 
-    DATA(lo_con) = cl_sql_connection=>get_connection( gc_dbcon_genius3 ).
+    DATA(lo_con) = get_genius_connection( ).
     DATA(lo_stmt) = lo_con->create_statement( tab_name_for_trace = 'VW_BW_SALES_CONTROL' ).
     DATA(lo_res) = lo_stmt->execute_query( lv_sql ).
 
@@ -588,4 +612,4 @@ CLASS lcl_business IMPLEMENTATION.
 
   ENDMETHOD.
 
-ENDCLASS.
+ENDCLASS.image.png

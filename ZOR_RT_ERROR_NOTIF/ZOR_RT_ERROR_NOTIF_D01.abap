@@ -94,7 +94,13 @@ CLASS lcl_business DEFINITION FINAL CREATE PUBLIC.
 
   PRIVATE SECTION.
 
+    CLASS-DATA go_genius_con TYPE REF TO cl_sql_connection.
+
     CLASS-METHODS:
+      get_genius_connection
+        RETURNING VALUE(ro_con) TYPE REF TO cl_sql_connection
+        RAISING cx_sql_exception,
+      close_genius_connection,
       fetch_invalid_trx
         IMPORTING it_kasa          TYPE tt_kasa_err
         RETURNING VALUE(rt_inv)    TYPE tt_inv_err
