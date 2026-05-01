@@ -181,6 +181,10 @@ CLASS lcl_controller IMPLEMENTATION.
           WHEN 'RETAILSTOREID'.
             <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f08.
             <fc>-reptext = <fc>-coltext.
+          WHEN 'GROSS_TOTAL'.
+            <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f24.
+            <fc>-reptext = <fc>-coltext.
+            <fc>-decimals_o = 2.
           WHEN 'REASON'.
             <fc>-scrtext_s = <fc>-scrtext_m = <fc>-scrtext_l = <fc>-coltext = text-f09.
             <fc>-reptext = <fc>-coltext.

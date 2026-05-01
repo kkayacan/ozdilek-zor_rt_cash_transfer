@@ -27,6 +27,7 @@
 * F07  İş günü
 * F08  RETAILSTOREID
 * F09  Sebep
+* F22  Fiş tutarı
 *
 * Tablo kolon başlıkları (kasa fark listesi)
 * F10  Mağaza adı

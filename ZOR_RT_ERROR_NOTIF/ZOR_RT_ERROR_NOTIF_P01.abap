@@ -109,6 +109,7 @@ CLASS lcl_business IMPLEMENTATION.
           WHEN ls_inv-trans_date IS NOT INITIAL THEN ls_inv-trans_date
           ELSE ls_scope-tarih ).
         ls_inv-retailstoreid   = lv_retailstoreid.
+        ls_inv-gross_total     = parse_dec_string( ls_header-gross_total ).
         ls_inv-reason          = lv_reason.
         APPEND ls_inv TO rt_inv.
       ENDLOOP.
@@ -132,7 +133,8 @@ CLASS lcl_business IMPLEMENTATION.
 
     lv_sql =
       |SELECT TH.ID, TH.FK_STORE, TH.FK_POS, TH.TRANS_DATE, | &&
-      |TH.RECEIPT_BARCODE, TH.PTYPE, TH.STATUS | &&
+      |TH.RECEIPT_BARCODE, TH.PTYPE, TH.STATUS, | &&
+      |CAST(TH.GROSS_TOTAL AS nvarchar(50)) AS GROSS_TOTAL | &&
       |FROM TRANSACTION_HEADER TH WITH (NOLOCK) | &&
       |INNER JOIN POS2 P2 WITH (NOLOCK) ON P2.ID = TH.FK_POS | &&
       |INNER JOIN STORE S2 WITH (NOLOCK) ON S2.ID = P2.FK_STORE | &&
@@ -552,10 +554,11 @@ CLASS lcl_business IMPLEMENTATION.
       |<td>| && text-f06 && |</td>| &&
       |<td>| && text-f07 && |</td>| &&
       |<td>| && text-f08 && |</td>| &&
+      |<td>| && text-f24 && |</td>| &&
       |<td>| && text-f09 && |</td></tr>|.
 
     IF gt_inv IS INITIAL.
-      ev_html = ev_html && |<tr><td colspan="9">| &&
+      ev_html = ev_html && |<tr><td colspan="10">| &&
         text-m03 && |</td></tr>|.
     ELSE.
       LOOP AT gt_inv INTO ls_inv.
@@ -568,6 +571,7 @@ CLASS lcl_business IMPLEMENTATION.
                  |<td>{ lcl_technical=>escape_html( CONV string( ls_inv-fk_pos ) ) }</td>| &&
                  |<td>{ lcl_technical=>escape_html( |{ ls_inv-businessdaydate DATE = ISO }| ) }</td>| &&
                  |<td>{ lcl_technical=>escape_html( CONV string( ls_inv-retailstoreid ) ) }</td>| &&
+                 |<td>{ ls_inv-gross_total }</td>| &&
                  |<td>{ lcl_technical=>escape_html( CONV string( ls_inv-reason ) ) }</td></tr>|.
         ev_html = ev_html && lv_row.
       ENDLOOP.
@@ -612,4 +616,4 @@ CLASS lcl_business IMPLEMENTATION.
 
   ENDMETHOD.
 
-ENDCLASS.image.png
+ENDCLASS.
